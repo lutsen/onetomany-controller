@@ -1,0 +1,15 @@
+{
+	"name": "lagan/onetomany",
+	"type": "library",
+	"description": "Controller for the Lagan one-to-many property. Lets the user define a one-to-many relation between two content objects.",
+	"keywords": ["lagan","one-to-many", "relation","property","controller"],
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Lútsen Stellingwerff",
+			"email": "lutsenstellingwerff@gmail.com",
+			"homepage": "http://www.hoverkraft.nl",
+			"role": "Developer"
+		}
+	]
+}
