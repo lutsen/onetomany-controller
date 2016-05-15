@@ -8,8 +8,8 @@ namespace Lagan\Property;
  * The Onetomany property type controller enables a one-to-many relation between 2 Lagan models.
  * The name of the property should be the name of the Lagan model this model can have a one-to-many
  * relation with. For this to work properly the other model should have a many-to-one relation with this model.
- * So in our example in the Lagan project the LaganHoverkraft model has a one-to-many relation
- * with the LaganCrew model, and the LaganCrew model has a many-to-one relation with the LaganHoverkraft model.
+ * So in our example in the Lagan project the Lagan Hoverkraft model has a one-to-many relation
+ * with the Lagan Crew model, and the Lagan Crew model has a many-to-one relation with the Lagan Hoverkraft model.
  *
  * A property type controller can contain a set, read, delete and options method. All methods are optional.
  * To be used with Lagan: https://github.com/lutsen/lagan
