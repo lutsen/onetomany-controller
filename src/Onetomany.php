@@ -18,12 +18,33 @@ namespace Lagan\Property;
 class Onetomany {
 
 	/**
+	 * The set method is executed each time a property with this type is set.
+	 *
+	 * @param bean		$bean		The Redbean bean object with the property.
+	 * @param array		$property	Lagan model property arrray.
+	 * @param integer[]	$new_value	An array with id's of the objects the object with this property has a one-to-many relation with.
+	 *
+	 * @return boolean	Returns false because a one-to-many relation is only set in the bean with the one-to-many relation
+	 */
+	public function set($bean, $property, $new_value) {
+
+		foreach ($new_value as $id) {
+			$related = \R::load(  $property['name'], $id );
+			$related->{ $bean->type.'_id' } = $id;
+			\R::store($related);
+		}
+
+		return false;
+
+	}
+
+	/**
 	 * The read method is executed each time a property with this type is read.
 	 *
 	 * @param bean		$bean		The Readbean bean object with this property.
-	 * @param array		$property	Lagan model property arrray.
+	 * @param string[]		$property	Lagan model property arrray.
 	 *
-	 * @return array	Array with Redbean beans with a many-to-one relation with the object with this property.
+	 * @return bean[]	Array with Redbean beans with a many-to-one relation with the object with this property.
 	 */
 	public function read($bean, $property) {
 
@@ -39,10 +60,21 @@ class Onetomany {
 	 * @param bean		$bean		The Readbean bean object with this property.
 	 * @param array		$property	Lagan model property arrray.
 	 *
-	 * @return array	Array with all beans of the $property['name'] Lagan model.
+	 * @return bean[]	Array with all beans of the $property['name'] Lagan model.
 	 */
 	public function options($bean, $property) {
-		return \R::findAll( $property['name'] );
+
+		$list_name = 'own'.ucfirst($property['name']).'List';
+		// List of beans who allready have a one-to-many ralation with this bean
+		$current = $bean->{ $list_name };
+		$ids = [];
+		foreach ($current as $bean) {
+			$ids[] = $bean->id;
+		}
+
+		return	\R::find( $property['name'],
+				' contract_id IN ('.\R::genSlots( $ids ).')',
+				$ids );
 	}
 
 }
