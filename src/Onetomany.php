@@ -73,7 +73,7 @@ class Onetomany {
 		}
 
 		return	\R::find( $property['name'],
-				' contract_id IN ('.\R::genSlots( $ids ).')',
+				' '.$property['name'].'_id IN ('.\R::genSlots( $ids ).')',
 				$ids );
 	}
 
