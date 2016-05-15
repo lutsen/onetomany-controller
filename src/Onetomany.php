@@ -66,14 +66,14 @@ class Onetomany {
 
 		$list_name = 'own'.ucfirst($property['name']).'List';
 		// List of beans who allready have a one-to-many ralation with this bean
-		$current = $bean->{ $list_name };
+		$relations = $bean->{ $list_name };
 		$ids = [];
-		foreach ($current as $bean) {
-			$ids[] = $bean->id;
+		foreach ($relations as $relation) {
+			$ids[] = $relation->id;
 		}
 
 		return	\R::find( $property['name'],
-				' '.$property['name'].'_id IN ('.\R::genSlots( $ids ).')',
+				' '.$property['name'].'_id NOT IN ('.\R::genSlots( $ids ).')',
 				$ids );
 	}
 
