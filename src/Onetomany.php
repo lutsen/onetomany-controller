@@ -28,11 +28,15 @@ class Onetomany {
 	 */
 	public function set($bean, $property, $new_value) {
 
+		$list = [];
 		foreach ($new_value as $id) {
-			$related = \R::load(  $property['name'], $id );
-			$related->{ $bean->type.'_id' } = $id;
-			\R::store($related);
+			if ($id) {
+				$list[] = \R::load(  $property['name'], $id );
+			}
 		}
+
+		$bean->{ 'own'.ucfirst($property['name']).'List' } = $list;
+		\R::store($bean);
 
 		return false;
 
@@ -48,8 +52,7 @@ class Onetomany {
 	 */
 	public function read($bean, $property) {
 
-		$list_name = 'own'.ucfirst($property['name']).'List';
-		return  $bean->{ $list_name };
+		return  $bean->{ 'own'.ucfirst($property['name']).'List' };
 
 	}
 
@@ -64,17 +67,31 @@ class Onetomany {
 	 */
 	public function options($bean, $property) {
 
-		$list_name = 'own'.ucfirst($property['name']).'List';
-		// List of beans who allready have a one-to-many ralation with this bean
-		$relations = $bean->{ $list_name };
-		$ids = [];
-		foreach ($relations as $relation) {
-			$ids[] = $relation->id;
+		if ( $bean ) {
+
+			// List of beans who allready have a one-to-many ralation with this bean
+			$relations = $bean->{ 'own'.ucfirst($property['name']).'List' };
+			if ($relations) {
+
+				$col_name = $bean->getMeta( 'type' ) . '_id';
+				$relations_ids = [];
+				foreach ($relations as $relation) {
+					$relations_ids[] = $relation->$col_name;
+				}
+
+				return	\R::find( $property['name'],
+						' '.$col_name.' NOT IN ('.\R::genSlots( $relations_ids ).') OR  '.$col_name.' IS NULL ',
+						$relations_ids );
+			} else {
+				return \R::findAll( $property['name'] );
+			}
+
+		} else {
+
+			return \R::findAll( $property['name'] );
+
 		}
 
-		return	\R::find( $property['name'],
-				' '.$property['name'].'_id NOT IN ('.\R::genSlots( $ids ).')',
-				$ids );
 	}
 
 }
