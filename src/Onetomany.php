@@ -69,22 +69,11 @@ class Onetomany {
 
 		if ( $bean ) {
 
-			// List of beans who allready have a one-to-many ralation with this bean
-			$relations = $bean->{ 'own'.ucfirst($property['name']).'List' };
-			if ($relations) {
-
-				$col_name = $bean->getMeta( 'type' ) . '_id';
-				$relations_ids = [];
-				foreach ($relations as $relation) {
-					$relations_ids[] = $relation->$col_name;
-				}
-
-				return	\R::find( $property['name'],
-						' '.$col_name.' NOT IN ('.\R::genSlots( $relations_ids ).') OR  '.$col_name.' IS NULL ',
-						$relations_ids );
-			} else {
-				return \R::findAll( $property['name'] );
-			}
+			// Return only beans with other or now $col_name id
+			$col_name = $bean->getMeta( 'type' ) . '_id';
+			return	\R::find( $property['name'],
+					' '.$col_name.' != ? OR  '.$col_name.' IS NULL ',
+					[ $bean->id ] );
 
 		} else {
 
