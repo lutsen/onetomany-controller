@@ -52,6 +52,7 @@ class Onetomany {
 	 */
 	public function read($bean, $property) {
 
+		// NOTE: We're not executing the read method for each bean. Before I implement this I want to check potential performance issues.
 		return  $bean->{ 'own'.ucfirst($property['name']).'List' };
 
 	}
