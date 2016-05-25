@@ -24,7 +24,7 @@ class Onetomany {
 	 * @param array		$property	Lagan model property arrray.
 	 * @param integer[]	$new_value	An array with id's of the objects the object with this property has a one-to-many relation with.
 	 *
-	 * @return boolean	Returns false because a one-to-many relation is only set in the bean with the one-to-many relation
+	 * @return boolean	Returns a boolean because a one-to-many relation is only set in the bean with the one-to-many relation. Returns true if any relations are set, false if not.
 	 */
 	public function set($bean, $property, $new_value) {
 
@@ -35,10 +35,18 @@ class Onetomany {
 			}
 		}
 
-		$bean->{ 'own'.ucfirst($property['name']).'List' } = $list;
-		\R::store($bean);
+		if ( count( $list ) > 0 ) {
 
-		return false;
+			$bean->{ 'own'.ucfirst($property['name']).'List' } = $list;
+			\R::store($bean);
+
+			return true;
+
+		} else {
+
+			return false;
+
+		}
 
 	}
 
