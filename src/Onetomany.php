@@ -28,16 +28,82 @@ class Onetomany {
 	 */
 	public function set($bean, $property, $new_value) {
 
-		$list = [];
-		foreach ($new_value as $id) {
-			if ($id) {
-				$list[] = \R::load(  $property['name'], $id );
+		// List of child beans to store
+		$children = [];
+
+		// Set up child model to read properties
+		$model_name = '\Lagan\Model\\' . ucfirst($property['name']);
+		$child = new $model_name();
+
+		$relative_position = false;
+		foreach($child->properties as $p) {
+			if ( $p['type'] === '\\Lagan\\Property\\Position' && $p['manytoone'] ) {
+				$relative_position = true;
+				$position_property_name = $p['name'];
+				break;
 			}
 		}
 
-		if ( count( $list ) > 0 ) {
+		if ( $relative_position ) {
 
-			$bean->{ 'own'.ucfirst($property['name']).'List' } = $list;
+			// Check if the parent of children has changed.
+			// If so update all positions for old and new parent.
+
+			//$old_children = $bean->{ 'own'.ucfirst($property['name']).'List' };
+			$old_children = \R::find( $property['name'], $bean->getMeta('type').'_id = :id ORDER BY '.$position_property_name.' ASC ', [ ':id' => $bean->id ] );
+			$old_children_ids = [];
+			$position = 0;
+			foreach ( $old_children as $old_child ) {
+
+				// Reset position of remaining old children, set position of removed old children to 0
+				if ( in_array( $old_child->id, $new_value ) ) {
+
+					$old_child->{ $position_property_name } = $position;
+					$children[] = $old_child;
+					$position++;
+
+					// Create array with id's for next step
+					$old_children_ids[] = $old_child->id;
+
+				} else {
+
+					$old_child->{ $position_property_name } = 0;
+					$old_child->{ $bean->getMeta('type') } = NULL; // Remove parent before storing
+					\R::store($old_child);
+
+				}
+
+			}
+
+			// Check if new children have been added
+			$bottom_position = count($old_children_ids);
+			foreach ( $new_value as $new_child_id ) {
+				if ( $new_child_id && !in_array( $new_child_id, $old_children_ids ) ) {
+
+					// Add new child to bottom position
+					$new_child = \R::load( $property['name'], $new_child_id );
+					$new_child->{ $position_property_name } = $bottom_position;
+					$children[] = $new_child;
+					$bottom_position++;
+
+				}
+			}
+
+		} else {
+
+			// No relative position
+			foreach ($new_value as $id) {
+				if ($id) {
+					$children[] = \R::load( $property['name'], $id );
+				}
+			}
+
+		}
+
+		// Store list
+		if ( count( $children ) > 0 ) {
+
+			$bean->{ 'own'.ucfirst($property['name']).'List' } = $children;
 			\R::store($bean);
 
 			return true;
@@ -61,7 +127,22 @@ class Onetomany {
 	public function read($bean, $property) {
 
 		// NOTE: We're not executing the read method for each bean. Before I implement this I want to check potential performance issues.
-		return  $bean->{ 'own'.ucfirst($property['name']).'List' };
+		//return  $bean->{ 'own'.ucfirst($property['name']).'List' };
+
+		// Set up child model to read properties
+		$model_name = '\Lagan\Model\\' . ucfirst($property['name']);
+		$child = new $model_name();
+
+		// All beans with this parent
+		// Oder by position(s) if exits
+		// NOTE: We're not executing the read method for each bean. Before I implement this I want to check potential performance issues.
+		$add_to_query = '';
+		foreach($child->properties as $p) {
+			if ( $p['type'] === '\\Lagan\\Property\\Position' ) {
+				$add_to_query = $p['name'].' ASC, ';
+			}
+		}
+		return \R::find( $property['name'], $bean->getMeta('type').'_id = :id ORDER BY '.$add_to_query.'title ASC ', [ ':id' => $bean->id ] );
 
 	}
 
